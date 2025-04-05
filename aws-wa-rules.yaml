@@ -1,0 +1,71 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: AWS Config Rule for RBCZ Database Baseline
+
+Parameters:
+  Version:
+    Type: String
+  LambdaFunctionName:
+    Type: String
+    Default: aws-wa-check-lambda
+
+Resources:
+  SEC08Encryption:
+    Type: AWS::Config::ConfigRule
+    Properties:
+      ConfigRuleName: SEC-08-Encryption
+      Description: "Checks if Encryption is enabled"
+      Source:
+        Owner: AWS
+        SourceIdentifier: EC2_EBS_ENCYPTION_BY_DEFAULT
+
+  SEC05Ports:
+    Type: AWS::Config::ConfigRule
+    Properties:
+      ConfigRuleName: SEC-05-InsecurePorts
+      Description: "Checks if insecured ports are not allowd from public"
+      Source:
+        Owner: AWS
+        SourceIdentifier: RESTICTED_INCOMMING_TRAFFIC        
+
+  SEC01CloudTrail:
+    Type: AWS::Config::ConfigRule
+    Properties:
+      ConfigRuleName: SEC-01-CloudTrail
+      Description: "Checks if CloudTrail is enabled"
+      Source:
+        Owner: AWS
+        SourceIdentifier: CLOUDTRAIL_SECUIRY_TRAIL_ENABLED     
+
+  COST01Budgets:
+    Type: AWS::Config::ConfigRule
+    Properties:
+      ConfigRuleName: COST-01-Budgets
+      Description: "Checks if AWS Budgets are defined"
+      Scope:
+        ComplianceResourceTypes: []
+      Source:
+        Owner: CUSTOM_LAMBDA
+        SourceDetails:
+          - EventSource: aws.config
+            MessageType: ScheduledNotification
+            MaximumExecutionFrequency: TwentyFour_Hours
+        SourceIdentifier: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${LambdaFunctionName}
+      InputParameters:
+        propertyName: CheckBudgets
+
+  COST04Decomission:
+    Type: AWS::Config::ConfigRule
+    Properties:
+      ConfigRuleName: COST-04-DecomissionResources
+      Description: "Checks if no EBS volumes are unattached "
+      Scope:
+        ComplianceResourceTypes: []
+      Source:
+        Owner: CUSTOM_LAMBDA
+        SourceDetails:
+          - EventSource: aws.config
+            MessageType: ScheduledNotification
+            MaximumExecutionFrequency: TwentyFour_Hours
+        SourceIdentifier: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${LambdaFunctionName}
+      InputParameters:
+        propertyName: CheckEbsAttachement

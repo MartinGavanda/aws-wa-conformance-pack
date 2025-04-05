@@ -1,0 +1,216 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: AWS Config Conformance Pack For AWS Well-Architected Reviews
+
+Metadata:
+  Author: Martin Gavanda
+  Contact: me@martingavanda.com
+
+Parameters:
+  S3withRules:
+    Type: String
+    Default: cf-templates-1jy9fswxe0zt1-eu-central-1
+
+Resources:
+  AwsWaConformancePack:
+    Type: AWS::Config::ConformancePack
+    DependsOn:
+      - AwsWaCustomConfigRulePermission
+    Properties:
+      ConformancePackInputParameters:
+        - ParameterName: Version
+          ParameterValue: 2025-05-04-01
+      ConformancePackName: aws-wa
+      TemplateS3Uri: !Sub "s3://${S3withRules}/aws-wa-rules.yaml"
+
+  AwsWaLambdaLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${AwsWaLambdaRole}
+      RetentionInDays: 7
+
+  AwsWaLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: aws-wa-lambda
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/service-role/AWSConfigRulesExecutionRole
+      Policies:
+        - PolicyName: aws-wa-lambda-budgets-policy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Sid: AllowReadBudgets
+                Action:
+                  - budgets:Describe*
+                  - budgets:View*
+                Resource:
+                  - "*"
+        - PolicyName: aws-wa-lambda-ec2-policy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Sid: AllowEc2Describe
+                Action:
+                  - ec2:Describe*
+                Resource:
+                  - "*"
+
+  AwsWaCustomConfigRulePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref AwsWaLambda
+      Principal: config.amazonaws.com
+      SourceAccount: !Ref AWS::AccountId
+    DependsOn:
+      - AwsWaLambdaRole
+      - AwsWaLambdaLogGroup
+
+  AwsWaLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Custom Lambda Function for automated WA check(s)
+      FunctionName: aws-wa-check-lambda
+      Runtime: python3.13
+      Timeout: 300
+      MemorySize: 128
+      Handler: index.lambda_handler
+      Role: !GetAtt AwsWaLambdaRole.Arn
+      Code:
+        ZipFile: |
+          import boto3
+          import json
+          import datetime
+          import os
+          import logging
+          
+          #======================================================================================================================
+          # Constants
+          #======================================================================================================================         
+          
+          REGION='eu-central-1'
+
+          #======================================================================================================================
+          # Setup logging
+          #======================================================================================================================
+
+          ## Logging level options in less verbosity order. INFO is the default.
+          ## If you enable DEBUG, it will log boto3 calls as well.
+
+          # Get logging level from environment variable
+          LOG_LEVEL = os.getenv('LOG_LEVEL', '').upper()
+          if LOG_LEVEL not in ['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG']:
+            LOG_LEVEL = 'INFO'
+
+          # Set up logging. Set the level if the handler is already configured.
+          if len(logging.getLogger().handlers) > 0:
+            logging.getLogger().setLevel(LOG_LEVEL)
+          else:
+            logging.basicConfig(level=LOG_LEVEL)
+
+          #======================================================================================================================
+          # Support Fucntions
+          #======================================================================================================================
+
+          def budget_exists():
+              client = boto3.client('budgets', region_name=REGION)  
+              try:
+                  account_id = boto3.client('sts').get_caller_identity()['Account']
+                  response = client.describe_budgets(AccountId=account_id)
+                  budgets = response.get('Budgets', [])
+                  return True
+              except Exception as e:
+                  return False
+
+          def all_volumes_in_use():
+              ec2 = boto3.client('ec2', region_name=REGION)
+              try:
+                  response = ec2.describe_volumes()
+                  volumes = response.get('Volumes', [])
+                  for vol in volumes:
+                      state = vol.get('State')
+                      if state == 'available':
+                          return False
+                  return True
+
+              except Exception as e:
+                  return False
+
+          #======================================================================================================================
+          # Core Lambda Function
+          #======================================================================================================================
+
+          def lambda_handler(event, context):
+              Logger.info("Received event:", json.dumps(event, indent=2))
+
+              config = boto3.client('config')
+
+              invoking_event = json.loads(event['invokingEvent'])
+              rule_parameters = json.loads(event.get('ruleParameters', '{}'))
+              property_name = rule_parameters.get('propertyName')
+
+              account_id = event.get('accountId')
+              result_token = event.get('resultToken')
+              ordering_timestamp = invoking_event.get('notificationCreationTime', str(datetime.datetime.utcnow()))
+
+              compliance_type = 'NOT_APPLICABLE'
+              annotation = ''
+
+              # Branch logic based on propertyName
+
+              if property_name == 'CheckBudgets':
+                  Logger.info("Performing check that AWS Budgets are used...")
+                  result=budget_exists()
+                  if result == True:
+                      compliance_type = 'COMPLIANT'
+                      annotation = "AWS Budgets are defined"
+                  else:
+                      compliance_type = 'NON_COMPLIANT'
+                      annotation = "AWS Budgets are not defined, check if other solution is used."  
+
+
+              elif property_name == 'CheckEbsAttachement':
+                  Logger.info("Performing check that all EBS volumes are used...")
+                  result=all_volumes_in_use()
+                  if result == True:
+                      compliance_type = 'COMPLIANT'
+                       annotation = "All EBS Volumes are attached"
+                  else:
+                      compliance_type = 'NON_COMPLIANT'
+                      annotation = "Some EBS Volumes are not attached, check if this is desired."  
+                      
+              else:
+                  print("Unknown propertyName:", property_name)
+                  compliance_type = 'NOT_APPLICABLE'
+                  annotation = 'Unknown or unsupported propertyName.'
+
+              # Always evaluating the account itself for simplicity
+              evaluation = {
+                  'ComplianceResourceType': 'AWS::::Account',
+                  'ComplianceResourceId': account_id,
+                  'ComplianceType': compliance_type,
+                  'Annotation': annotation,
+                  'OrderingTimestamp': ordering_timestamp
+              }
+
+              # Submit evaluation back to AWS Config
+              response = config.put_evaluations(
+                  Evaluations=[evaluation],
+                  ResultToken=result_token
+              )
+
+              return {
+                  'status': 'done',
+                  'propertyName': property_name,
+                  'compliance': compliance_type
+              }
