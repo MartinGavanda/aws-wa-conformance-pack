@@ -5,6 +5,7 @@ This is an MVP for using AWS Config Rules (Managed and Custom) to automatically 
 The MVP supports:
 - AWS Managed Rules
 - Custom, Lambda-backed Rules
+![Overview](https://github.com/MartinGavanda/aws-wa-conformance-pack/blob/main/overview.png)
 
 ## Deployment
 - Deploy the aws-wa-rules.yaml to S3
