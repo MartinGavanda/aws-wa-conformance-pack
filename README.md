@@ -1,4 +1,4 @@
-# AWS Confif Conformance Pack for Well-Architected
+# AWS Config Conformance Pack for Well-Architected
 
 This is an MVP for using AWS Config Rules (Managed and Custom) to automatically checks several areas of AWS Well-Architected Framework.
 

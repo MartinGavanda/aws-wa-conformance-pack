@@ -16,7 +16,7 @@ Resources:
       Description: "Checks if Encryption is enabled"
       Source:
         Owner: AWS
-        SourceIdentifier: EC2_EBS_ENCYPTION_BY_DEFAULT
+        SourceIdentifier: EC2_EBS_ENCRYPTION_BY_DEFAULT
 
   SEC05Ports:
     Type: AWS::Config::ConfigRule
@@ -25,7 +25,7 @@ Resources:
       Description: "Checks if insecured ports are not allowd from public"
       Source:
         Owner: AWS
-        SourceIdentifier: RESTICTED_INCOMMING_TRAFFIC        
+        SourceIdentifier: RESTRICTED_INCOMING_TRAFFIC      
 
   SEC01CloudTrail:
     Type: AWS::Config::ConfigRule
@@ -34,7 +34,7 @@ Resources:
       Description: "Checks if CloudTrail is enabled"
       Source:
         Owner: AWS
-        SourceIdentifier: CLOUDTRAIL_SECUIRY_TRAIL_ENABLED     
+        SourceIdentifier: CLOUDTRAIL_SECURITY_TRAIL_ENABLED  
 
   COST01Budgets:
     Type: AWS::Config::ConfigRule
