@@ -23,3 +23,21 @@ The MVP supports:
 ## Lambda-backed Rules
 - Single Lambda Function si deployed
 - Based on the InputParameters -> propertyName value given check is performed
+<pre>
+  COST01Budgets:
+    Type: AWS::Config::ConfigRule
+    Properties:
+      ConfigRuleName: COST-01-Budgets
+      Description: "Checks if AWS Budgets are defined"
+      Scope:
+        ComplianceResourceTypes: []
+      Source:
+        Owner: CUSTOM_LAMBDA
+        SourceDetails:
+          - EventSource: aws.config
+            MessageType: ScheduledNotification
+            MaximumExecutionFrequency: TwentyFour_Hours
+        SourceIdentifier: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${LambdaFunctionName}
+      InputParameters:
+        propertyName: CheckBudgets
+</pre>
