@@ -6,7 +6,7 @@ The MVP supports:
 - AWS Managed Rules
 - Custom, Lambda-backed Rules
 
-![Overview](https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png)
+![Overview](https://github.com/MartinGavanda/aws-wa-conformance-pack/blob/main/overview.png)
 
 ## Lambda-backed Rules
 - Single Lambda Function si deployed
