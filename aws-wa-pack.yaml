@@ -18,7 +18,7 @@ Resources:
     Properties:
       ConformancePackInputParameters:
         - ParameterName: Version
-          ParameterValue: 2025-05-04-01
+          ParameterValue: 2025-05-04-v01
       ConformancePackName: aws-wa
       TemplateS3Uri: !Sub "s3://${S3withRules}/aws-wa-rules.yaml"
 
