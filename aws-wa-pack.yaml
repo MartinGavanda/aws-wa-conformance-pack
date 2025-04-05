@@ -151,8 +151,6 @@ Resources:
           #======================================================================================================================
 
           def lambda_handler(event, context):
-              Logger.info("Received event:", json.dumps(event, indent=2))
-
               config = boto3.client('config')
 
               invoking_event = json.loads(event['invokingEvent'])
@@ -169,7 +167,7 @@ Resources:
               # Branch logic based on propertyName
 
               if property_name == 'CheckBudgets':
-                  Logger.info("Performing check that AWS Budgets are used...")
+                  logging.info("Performing check that AWS Budgets are used...")
                   result=budget_exists()
                   if result == True:
                       compliance_type = 'COMPLIANT'
@@ -180,11 +178,11 @@ Resources:
 
 
               elif property_name == 'CheckEbsAttachement':
-                  Logger.info("Performing check that all EBS volumes are used...")
+                  logging.info("Performing check that all EBS volumes are used...")
                   result=all_volumes_in_use()
                   if result == True:
                       compliance_type = 'COMPLIANT'
-                       annotation = "All EBS Volumes are attached"
+                      annotation = "All EBS Volumes are attached"
                   else:
                       compliance_type = 'NON_COMPLIANT'
                       annotation = "Some EBS Volumes are not attached, check if this is desired."  
