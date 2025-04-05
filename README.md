@@ -6,6 +6,8 @@ The MVP supports:
 - AWS Managed Rules
 - Custom, Lambda-backed Rules
 
+![Overview](https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png)
+
 ## Lambda-backed Rules
 - Single Lambda Function si deployed
 - Based on the InputParameters -> propertyName value given check is performed
