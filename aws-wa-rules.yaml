@@ -57,7 +57,7 @@ Resources:
     Type: AWS::Config::ConfigRule
     Properties:
       ConfigRuleName: COST-04-DecomissionResources
-      Description: "Checks if no EBS volumes are unattached "
+      Description: "Checks if no EBS volumes are unattached"
       Scope:
         ComplianceResourceTypes: []
       Source:
