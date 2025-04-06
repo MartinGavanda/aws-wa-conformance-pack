@@ -7,6 +7,14 @@ The MVP supports:
 - Custom, Lambda-backed Rules
 ![Overview](https://github.com/MartinGavanda/aws-wa-conformance-pack/blob/main/overview.png)
 
+## Implemented rules
+- SEC-01-CloudTrail: Checks if CloudTrail is enabled
+- SEC-05-InsecurePorts: Checks if insecured ports are not allowd from public
+- SEC-08-Encryption: Checks if Encryption by default is enabled
+- COST-01-Budgets: Checks if AWS Budgets are defined
+- COST-04-DecomissionResources: Checks if no EBS volumes are unattached
+
+
 ## Deployment
 - Deploy the aws-wa-rules.yaml to S3
 - Update aws-wa-pack.yaml with S3 bucket where the rules are stored (you can do that through CFN Deployemnt using Parameter though)
