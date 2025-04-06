@@ -11,7 +11,7 @@ The MVP supports:
 - Deploy the aws-wa-rules.yaml to S3
 - Update aws-wa-pack.yaml with S3 bucket where the rules are stored (you can do that through CFN Deployemnt using Parameter though)
 - Deploy CloudFormation Stack with aws-pack-yaml
-![Deployment](https://github.com/MartinGavanda/aws-wa-conformance-pack/blob/main/cfn_deplopyment.png)
+![Deployment](https://github.com/MartinGavanda/aws-wa-conformance-pack/blob/main/deplopyment.png)
 
 
 ## Usage
